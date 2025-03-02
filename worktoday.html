@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch trình trong ngày</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            text-align: center;
+            background: url('https://source.unsplash.com/1600x900/?nature,day') no-repeat center center/cover;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #e9ecef;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .task-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Lịch trình trong ngày</h2>
+        <img src="https://source.unsplash.com/200x100/?calendar" alt="Calendar" style="border-radius: 10px; margin-bottom: 10px;">
+        <input type="time" id="timeInput">
+        <input type="text" id="taskInput" placeholder="Nhập công việc...">
+        <button onclick="addTask()">Thêm</button>
+        <ul id="taskList"></ul>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", loadTasks);
+
+        function addTask() {
+            let time = document.getElementById('timeInput').value;
+            let task = document.getElementById('taskInput').value;
+            if (time && task) {
+                let taskItem = { time, task };
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks.push(taskItem);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                renderTask(taskItem);
+                document.getElementById('taskInput').value = '';
+            } else {
+                alert('Vui lòng nhập đầy đủ thông tin!');
+            }
+        }
+
+        function renderTask(taskItem) {
+            let li = document.createElement('li');
+            li.innerHTML = `<img src='https://source.unsplash.com/20x20/?clock' class='task-icon'><span>${taskItem.time} - ${taskItem.task}</span> <button class='delete-btn' onclick='removeTask(this, "${taskItem.time}", "${taskItem.task}")'>Xóa</button>`;
+            document.getElementById('taskList').appendChild(li);
+        }
+
+        function removeTask(button, time, task) {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks = tasks.filter(t => t.time !== time || t.task !== task);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            button.parentElement.remove();
+        }
+
+        function loadTasks() {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks.forEach(renderTask);
+        }
+    </script>
+</body>
+</html>
