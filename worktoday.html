@@ -7,11 +7,11 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 400px;
+            max-width: 500px;
             margin: auto;
             padding: 20px;
             text-align: center;
-            background: url('https://source.unsplash.com/1600x900/?nature,day') no-repeat center center/cover;
+            background: url('background.jpg') no-repeat center center/cover;
         }
         .container {
             background: white;
@@ -19,7 +19,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        input, button {
+        input, button, select {
             margin: 5px;
             padding: 10px;
             border: 1px solid #ccc;
@@ -46,13 +46,16 @@
             justify-content: space-between;
             align-items: center;
         }
-        .delete-btn {
+        .delete-btn, .edit-btn {
             background: red;
             color: white;
             border: none;
             padding: 5px;
             cursor: pointer;
             border-radius: 3px;
+        }
+        .edit-btn {
+            background: orange;
         }
         .task-icon {
             width: 20px;
@@ -64,9 +67,14 @@
 <body>
     <div class="container">
         <h2>Lịch trình trong ngày</h2>
-        <img src="https://source.unsplash.com/200x100/?calendar" alt="Calendar" style="border-radius: 10px; margin-bottom: 10px;">
+        <img src="calendar.jpg" alt="Calendar" style="border-radius: 10px; margin-bottom: 10px;">
         <input type="time" id="timeInput">
         <input type="text" id="taskInput" placeholder="Nhập công việc...">
+        <select id="category">
+            <option value="Cá nhân">Cá nhân</option>
+            <option value="Công việc">Công việc</option>
+            <option value="Học tập">Học tập</option>
+        </select>
         <button onclick="addTask()">Thêm</button>
         <ul id="taskList"></ul>
     </div>
@@ -77,12 +85,14 @@
         function addTask() {
             let time = document.getElementById('timeInput').value;
             let task = document.getElementById('taskInput').value;
+            let category = document.getElementById('category').value;
             if (time && task) {
-                let taskItem = { time, task };
+                let taskItem = { time, task, category };
                 let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
                 tasks.push(taskItem);
                 localStorage.setItem('tasks', JSON.stringify(tasks));
                 renderTask(taskItem);
+                scheduleNotification(taskItem);
                 document.getElementById('taskInput').value = '';
             } else {
                 alert('Vui lòng nhập đầy đủ thông tin!');
@@ -91,7 +101,9 @@
 
         function renderTask(taskItem) {
             let li = document.createElement('li');
-            li.innerHTML = `<img src='https://source.unsplash.com/20x20/?clock' class='task-icon'><span>${taskItem.time} - ${taskItem.task}</span> <button class='delete-btn' onclick='removeTask(this, "${taskItem.time}", "${taskItem.task}")'>Xóa</button>`;
+            li.innerHTML = `<img src='clock.jpg' class='task-icon'><span>${taskItem.time} - ${taskItem.task} (${taskItem.category})</span> 
+                            <button class='edit-btn' onclick='editTask(this, "${taskItem.time}", "${taskItem.task}", "${taskItem.category}")'>Sửa</button>
+                            <button class='delete-btn' onclick='removeTask(this, "${taskItem.time}", "${taskItem.task}")'>Xóa</button>`;
             document.getElementById('taskList').appendChild(li);
         }
 
@@ -102,9 +114,45 @@
             button.parentElement.remove();
         }
 
+        function editTask(button, time, task, category) {
+            document.getElementById('timeInput').value = time;
+            document.getElementById('taskInput').value = task;
+            document.getElementById('category').value = category;
+            removeTask(button, time, task);
+        }
+
         function loadTasks() {
             let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-            tasks.forEach(renderTask);
+            tasks.forEach(task => {
+                renderTask(task);
+                scheduleNotification(task);
+            });
+        }
+
+        function scheduleNotification(taskItem) {
+            if (Notification.permission === 'granted') {
+                let now = new Date();
+                let taskTime = new Date();
+                let [hours, minutes] = taskItem.time.split(':');
+                taskTime.setHours(hours, minutes, 0);
+                let delay = taskTime - now;
+                if (delay > 0) {
+                    setTimeout(() => {
+                        new Notification("Nhắc nhở công việc", {
+                            body: `${taskItem.task} (${taskItem.category}) lúc ${taskItem.time}`,
+                            icon: 'reminder.jpg'
+                        });
+                    }, delay);
+                }
+            }
+        }
+
+        if (Notification.permission !== 'granted') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    alert("Thông báo nhắc nhở đã được bật!");
+                }
+            });
         }
     </script>
 </body>
